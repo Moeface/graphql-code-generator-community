@@ -173,6 +173,12 @@ export class ReactApolloVisitor extends ClientSideBaseVisitor<
     }';`;
   }
 
+  private getApolloReactSkipTokenImport(isTypeImport: boolean): string {
+    return `${this.getImportStatement(
+      isTypeImport,
+    )} * as ${this.getApolloReactHooksIdentifier()} from '@apollo/client';`;
+  }
+
   private getOmitDeclaration(): string {
     return OMIT_TYPE;
   }
@@ -385,6 +391,7 @@ export class ReactApolloVisitor extends ClientSideBaseVisitor<
 
     this.imports.add(this.getApolloReactCommonImport(true));
     this.imports.add(this.getApolloReactHooksImport(false));
+    this.imports.add(this.getApolloReactSkipTokenImport(false));
     this.imports.add(this.getDefaultOptions());
     const hookFns = [
       `export function use${operationName}(baseOptions${
@@ -436,12 +443,12 @@ export class ReactApolloVisitor extends ClientSideBaseVisitor<
         }) + this.config.hooksSuffix;
 
       hookFns.push(
-        `export function use${suspenseOperationName}(baseOptions?: ${this.getApolloReactHooksIdentifier()}.SuspenseQueryHookOptions<${operationResultType}, ${operationVariablesTypes}>) {
+        `export function use${suspenseOperationName}(baseOptions?: ${this.getApolloReactHooksIdentifier()}.SkipToken | ${this.getApolloReactHooksIdentifier()}.SuspenseQueryHookOptions<${operationResultType}, ${operationVariablesTypes}>) {
           const options = {...defaultOptions, ...baseOptions}
           return ${this.getApolloReactHooksIdentifier()}.useSuspenseQuery<${operationResultType}, ${operationVariablesTypes}>(${this.getDocumentNodeVariable(
           node,
           documentVariableName,
-        )}, options);
+        )}, baseOptions === ${this.getApolloReactHooksIdentifier()}.skipToken ? ${this.getApolloReactHooksIdentifier()}.skipToken : options);
         }`,
       );
       hookResults.push(
